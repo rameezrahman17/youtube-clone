@@ -138,3 +138,70 @@
 }
 
 
+/* Skeleton Loading */
+.skeleton {
+    animation: shimmer 1.5s infinite linear;
+    background: linear-gradient(to right, #272727 4%, #3f3f3f 25%, #272727 36%);
+    background-size: 1000px 100%;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.skeleton-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeleton-thumbnail {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 12px;
+}
+
+.skeleton-info {
+    display: flex;
+    gap: 12px;
+}
+
+.skeleton-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.skeleton-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.skeleton-text {
+    height: 16px;
+    border-radius: 4px;
+    width: 90%;
+}
+
+.skeleton-text.short {
+    width: 60%;
+}
+
+/* Error Banner */
+.api-error-banner {
+    background-color: #3f3f3f;
+    color: #fff;
+    padding: 12px;
+    margin: 12px 24px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+}

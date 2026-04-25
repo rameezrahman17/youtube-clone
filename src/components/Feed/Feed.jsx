@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import './Feed.css'
+import { fallbackVideos } from '../../utils/fallbackData'
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
@@ -7,6 +8,8 @@ export default function Feed({ searchQuery, onVideoClick }) {
     const [videos, setVideos] = useState([])
     const [channelData, setChannelData] = useState({})
     const [selected, setSelected] = useState("All")
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(false)
 
     // pick what to search for
     let query = ""
@@ -17,6 +20,8 @@ export default function Feed({ searchQuery, onVideoClick }) {
     }
 
     const fetchVideos = async () => {
+        setLoading(true)
+        setError(false)
         try {
             let allVideos = []
             let nextPageToken = ""
@@ -29,10 +34,12 @@ export default function Feed({ searchQuery, onVideoClick }) {
             let res = await fetch(url)
             let data = await res.json()
             
-            if (data.items) {
-                allVideos = [...data.items]
-                nextPageToken = data.nextPageToken
+            if (data.error || !data.items) {
+                throw new Error(data.error?.message || "API limit reached")
             }
+
+            allVideos = [...data.items]
+            nextPageToken = data.nextPageToken
 
             // Second fetch (25 more videos if possible)
             if (nextPageToken && allVideos.length < 75) {
@@ -49,7 +56,6 @@ export default function Feed({ searchQuery, onVideoClick }) {
             }
 
             // For search, we need to fetch details for all these videos to get stats and duration
-            // Note: videos.list API has a limit of 50 IDs per request
             if (query && allVideos.length > 0) {
                 const videoIds = allVideos.map(item => item.id.videoId).filter(id => id)
                 
@@ -99,8 +105,18 @@ export default function Feed({ searchQuery, onVideoClick }) {
                 setChannelData(prev => ({ ...prev, ...map1, ...map2 }))
             }
         } catch (error) {
-            console.error("Error fetching videos:", error)
-            setVideos([])
+            console.error("Error fetching videos, using fallback data:", error)
+            setError(true)
+            setVideos(fallbackVideos)
+            
+            // Setup fallback channel avatars
+            const fallbackChannelMap = {}
+            fallbackVideos.forEach(v => {
+                fallbackChannelMap[v.snippet.channelId] = v.snippet.thumbnails.medium.url
+            })
+            setChannelData(fallbackChannelMap)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -127,7 +143,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
         const seconds = match[3] ? match[3].padStart(2, '0') : '00'
         
         if (hours) return `${hours}${minutes}:${seconds}`
-        return `${parseInt(minutes)}:${seconds}`
+        return `${parseInt(minutes || 0)}:${seconds}`
     }
 
     // Helper for relative time
@@ -157,33 +173,56 @@ export default function Feed({ searchQuery, onVideoClick }) {
                     </button>
                 ))}
             </div>
+            
+            {error && (
+                <div className="api-error-banner">
+                    API Limit reached. Showing sample videos.
+                </div>
+            )}
+
             <div className="video-grid">
-                {videos.map((video) => (
-                    <div key={video.id} className="video-card" onClick={() => onVideoClick && onVideoClick(video.id.videoId || video.id)}>
-                        <div className="thumbnail-container">
-                            <img src={(video.snippet.thumbnails?.high || video.snippet.thumbnails?.medium || video.snippet.thumbnails?.default)?.url} alt={video.snippet.title} />
-                            <span className="duration-tag">
-                                {formatDuration(video.contentDetails?.duration)}
-                            </span>
-                        </div>
-                        <div className="video-info">
-                            <div className="channel-avatar">
-                                {channelData[video.snippet.channelId] ? (
-                                    <img src={channelData[video.snippet.channelId]} alt={video.snippet.channelTitle} />
-                                ) : (
-                                    <div className="placeholder-avatar"></div>
-                                )}
-                            </div>
-                            <div className="video-details">
-                                <h3 className="video-title">{video.snippet.title}</h3>
-                                <p className="channel-name">{video.snippet.channelTitle}</p>
-                                <p className="video-stats">
-                                    {formatViews(video.statistics?.viewCount)} • {formatTime(video.snippet.publishedAt)}
-                                </p>
+                {loading ? (
+                    // Skeleton loader
+                    Array(12).fill(0).map((_, i) => (
+                        <div key={`skel-${i}`} className="skeleton-card">
+                            <div className="skeleton-thumbnail skeleton"></div>
+                            <div className="skeleton-info">
+                                <div className="skeleton-avatar skeleton"></div>
+                                <div className="skeleton-details">
+                                    <div className="skeleton-text skeleton"></div>
+                                    <div className="skeleton-text short skeleton"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                ) : (
+                    videos.map((video) => (
+                        <div key={video.id.videoId || video.id} className="video-card" onClick={() => onVideoClick && onVideoClick(video.id.videoId || video.id)}>
+                            <div className="thumbnail-container">
+                                <img src={(video.snippet.thumbnails?.high || video.snippet.thumbnails?.medium || video.snippet.thumbnails?.default)?.url} alt={video.snippet.title} />
+                                <span className="duration-tag">
+                                    {formatDuration(video.contentDetails?.duration)}
+                                </span>
+                            </div>
+                            <div className="video-info">
+                                <div className="channel-avatar">
+                                    {channelData[video.snippet.channelId] ? (
+                                        <img src={channelData[video.snippet.channelId]} alt={video.snippet.channelTitle} />
+                                    ) : (
+                                        <div className="placeholder-avatar"></div>
+                                    )}
+                                </div>
+                                <div className="video-details">
+                                    <h3 className="video-title">{video.snippet.title}</h3>
+                                    <p className="channel-name">{video.snippet.channelTitle}</p>
+                                    <p className="video-stats">
+                                        {formatViews(video.statistics?.viewCount)} • {formatTime(video.snippet.publishedAt)}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     )
