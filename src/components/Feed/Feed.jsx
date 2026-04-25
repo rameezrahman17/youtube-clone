@@ -5,6 +5,7 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
 export default function Feed({ searchQuery }) {
     const [videos, setVideos] = useState([])
+    const [channelData, setChannelData] = useState({})
 
     const fetchVideos = async () => {
         try {
@@ -48,21 +49,45 @@ export default function Feed({ searchQuery }) {
                 
                 const fetchDetails = async (ids) => {
                     if (!ids) return []
-                    const res = await fetch(
+                    const detailsRes = await fetch(
                         `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${ids}&key=${API_KEY}`
                     )
-                    const data = await res.json()
-                    return data.items || []
+                    const detailsData = await detailsRes.json()
+                    return detailsData.items || []
                 }
 
                 const [details1, details2] = await Promise.all([
                     fetchDetails(batch1),
                     fetchDetails(batch2)
                 ])
-                
-                setVideos([...details1, ...details2])
-            } else {
-                setVideos(allVideos)
+                allVideos = [...details1, ...details2]
+            }
+            
+            const finalVideos = allVideos
+            setVideos(finalVideos)
+            
+            // Fetch channel data for the unique channels in this video list
+            if (finalVideos.length > 0) {
+                const channelIds = [...new Set(finalVideos.map(item => item.snippet.channelId))]
+                const cBatch1 = channelIds.slice(0, 50).join(",")
+                const cBatch2 = channelIds.slice(50, 100).join(",")
+
+                const fetchChannelBatch = async (ids) => {
+                    if (!ids) return {}
+                    const channelRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${ids}&key=${API_KEY}`)
+                    const channelDataJson = await channelRes.json()
+                    const map = {}
+                    channelDataJson.items?.forEach(item => {
+                        map[item.id] = item.snippet.thumbnails.default.url
+                    })
+                    return map
+                }
+
+                const [map1, map2] = await Promise.all([
+                    fetchChannelBatch(cBatch1),
+                    fetchChannelBatch(cBatch2)
+                ])
+                setChannelData(prev => ({ ...prev, ...map1, ...map2 }))
             }
         } catch (error) {
             console.error("Error fetching videos:", error)
@@ -127,7 +152,13 @@ export default function Feed({ searchQuery }) {
                             </span>
                         </div>
                         <div className="video-info">
-                            <div className="channel-avatar placeholder-avatar"></div>
+                            <div className="channel-avatar">
+                                {channelData[video.snippet.channelId] ? (
+                                    <img src={channelData[video.snippet.channelId]} alt={video.snippet.channelTitle} />
+                                ) : (
+                                    <div className="placeholder-avatar"></div>
+                                )}
+                            </div>
                             <div className="video-details">
                                 <h3 className="video-title">{video.snippet.title}</h3>
                                 <p className="channel-name">{video.snippet.channelTitle}</p>
