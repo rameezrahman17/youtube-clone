@@ -3,7 +3,7 @@ import './Feed.css'
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
-export default function Feed({ searchQuery }) {
+export default function Feed({ searchQuery, onVideoClick }) {
     const [videos, setVideos] = useState([])
     const [channelData, setChannelData] = useState({})
 
@@ -144,7 +144,7 @@ export default function Feed({ searchQuery }) {
             </div>
             <div className="video-grid">
                 {videos.map((video) => (
-                    <div key={video.id} className="video-card">
+                    <div key={video.id} className="video-card" onClick={() => onVideoClick && onVideoClick(video.id.videoId || video.id)}>
                         <div className="thumbnail-container">
                             <img src={video.snippet.thumbnails.high.url} alt={video.snippet.title} />
                             <span className="duration-tag">

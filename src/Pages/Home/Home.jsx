@@ -1,10 +1,10 @@
 import React from 'react'
 import Feed from '../../components/Feed/Feed.jsx'
 
-const Home = ({ searchQuery }) => {
+const Home = ({ searchQuery, onVideoClick }) => {
   return (
     <div>
-      <Feed searchQuery={searchQuery} />
+      <Feed searchQuery={searchQuery} onVideoClick={onVideoClick} />
     </div>
   )
 }
