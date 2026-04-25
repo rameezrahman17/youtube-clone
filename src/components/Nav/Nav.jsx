@@ -3,7 +3,7 @@ import { Bars3Icon, MagnifyingGlassIcon, MicrophoneIcon, PlusIcon, BellIcon } fr
 import logo from '../images/youtube.png'
 import './Nav.css'
 
-const API_KEY = "AIzaSyAP4GFOK5JlAsFV2q0yr7yWM6aKw6tP1nk"
+const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
 export default function Nav({ onSearch }) {
     const [currsearch, setCurrsearch] = useState('')

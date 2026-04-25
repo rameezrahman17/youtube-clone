@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import './Feed.css'
 
-const API_KEY = "AIzaSyAP4GFOK5JlAsFV2q0yr7yWM6aKw6tP1nk"
+const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
 export default function Feed({ searchQuery }) {
     const [videos, setVideos] = useState([])
