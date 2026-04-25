@@ -8,12 +8,17 @@ import PlayVideo from './components/PlayVideo/PlayVideo'
 function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [videoId, setVideoId] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
 
   return (
     <div className="app-container">
-      <Nav onSearch={setSearchQuery} />
+      <Nav onSearch={setSearchQuery} toggleSidebar={toggleSidebar} />
       <div className="main-layout">
-        <Sidebar />
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="content-area">
           {videoId ? (
             <PlayVideo videoId={videoId} onBack={() => setVideoId(null)} />
