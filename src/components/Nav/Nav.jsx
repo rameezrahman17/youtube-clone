@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Bars3Icon, MagnifyingGlassIcon, MicrophoneIcon, PlusIcon, BellIcon } from '@heroicons/react/24/outline'
 import logo from '../images/youtube.png'
 import './Nav.css'

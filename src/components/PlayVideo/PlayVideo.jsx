@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './PlayVideo.css'
 import VideoTitle from './VideoTitle'
 import ChannelRow from './ChannelRow'

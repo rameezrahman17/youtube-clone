@@ -1,4 +1,4 @@
-import React from 'react'
+
 
 function VideoTitle({ data }) {
     if (!data) return null

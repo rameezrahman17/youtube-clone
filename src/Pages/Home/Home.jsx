@@ -1,4 +1,4 @@
-import React from 'react'
+
 import Feed from '../../components/Feed/Feed.jsx'
 
 const Home = ({ searchQuery, onVideoClick }) => {
