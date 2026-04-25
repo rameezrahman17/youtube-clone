@@ -140,7 +140,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
         return Math.floor(diffInSeconds / 2592000) + ' months ago'
     }
 
-    const categories = ["All", "Gaming", "Music", "Mixes", "Live", "Comedy", "Podcasts", "News", "Recently Uploaded", "Watched", "New to you"]
+    const categories = ["All", "Gaming", "Music", "Comedy", "Podcasts", "Sports", "Cooking", "Technology", "Education", "Travel", "Cars", "Movies"]
 
     return (
         <div className="feed-container">
