@@ -41,11 +41,70 @@
     color: #f1f1f1;
 }
 
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
 .channel-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 14px;
+}
+
+.action-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.like-pill {
+    display: flex;
+    align-items: center;
+    background: #272727;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.like-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #f1f1f1;
+}
+
+.like-btn:hover {
+    background: #3f3f3f;
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: #555;
+}
+
+.action-btn {
+    background: #272727;
+    color: #f1f1f1;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 18px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background: #3f3f3f;
+}
+
+.action-btn.dots {
+    padding: 8px 12px;
 }
 
 .ch-avatar {
