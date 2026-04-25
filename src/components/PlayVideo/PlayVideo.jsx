@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './PlayVideo.css'
+import VideoTitle from './VideoTitle'
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
@@ -41,7 +42,7 @@ function PlayVideo({ videoId, onBack }) {
                 ></iframe>
             </div>
 
-            {data && <h1 className="vid-title">{data.snippet.title}</h1>}
+            <VideoTitle data={data} />
         </div>
     )
 }
