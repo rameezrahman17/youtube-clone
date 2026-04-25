@@ -19,17 +19,14 @@ export default function Nav({ onSearch }) {
 
         const delayDebounceFn = setTimeout(async () => {
             try {
-                const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${currsearch}&maxResults=20&type=video&key=${API_KEY}`)
+                const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${currsearch}&maxResults=50&type=video&key=${API_KEY}`)
                 const data = await res.json()
                 if (data.items) {
                     const newSuggestions = data.items.map(item => {
-                        const description = item.snippet.description || ''
-                        const firstWord = description.split(' ')[0] || ''
-                        const channelName = item.snippet.channelTitle || ''
-                        return `${firstWord} ${channelName}`.trim()
+                        return item.snippet.title.replace(/&#39;/g, "'").replace(/&quot;/g, '"')
                     })
                     
-                    const uniqueSuggestions = [...new Set(newSuggestions)].filter(Boolean).slice(0, 14)
+                    const uniqueSuggestions = [...new Set(newSuggestions)].filter(Boolean).slice(0, 10)
                     setSuggestions(uniqueSuggestions)
                 }
             } catch (e) {
@@ -93,11 +90,15 @@ export default function Nav({ onSearch }) {
                     {isFocused && suggestions.length > 0 && (
                         <ul className="search-dropdown">
                             {suggestions.map((suggestion, index) => (
-                                <li key={index} className="search-suggestion" onMouseDown={(e) => {
-                                    e.preventDefault(); // Prevents input from losing focus immediately before click registers if needed
-                                    setCurrsearch(suggestion)
-                                    handleExecuteSearch(suggestion)
-                                }}>
+                                <li 
+                                    key={index} 
+                                    className="search-suggestion"
+                                    onMouseDown={(e) => {
+                                        e.preventDefault(); 
+                                        setCurrsearch(suggestion)
+                                        handleExecuteSearch(suggestion)
+                                    }}
+                                >
                                     <MagnifyingGlassIcon className="icon" style={{ width: '16px', height: '16px', marginRight: '12px' }} />
                                     {suggestion}
                                 </li>

@@ -5,79 +5,39 @@ const API_KEY = "AIzaSyAP4GFOK5JlAsFV2q0yr7yWM6aKw6tP1nk"
 
 export default function Feed({ searchQuery }) {
     const [videos, setVideos] = useState([])
-    const [channelIcons, setChannelIcons] = useState({})
+
+    const fetchVideos = async () => {
+        try {
+            let url = ""
+            if (searchQuery) {
+                url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=50&type=video&key=${API_KEY}`
+            } else {
+                url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=50&regionCode=IN&key=${API_KEY}`
+            }
+
+            const res = await fetch(url)
+            const data = await res.json()
+            
+            if (data.items) {
+                if (searchQuery) {
+                    const videoIds = data.items.map(item => item.id.videoId)
+                    const detailsRes = await fetch(
+                        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds.join(",")}&key=${API_KEY}`
+                    )
+                    const detailsData = await detailsRes.json()
+                    setVideos(detailsData.items || [])
+                } else {
+                    setVideos(data.items)
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching videos:", error)
+        }
+    }
 
     useEffect(() => {
-        const fetchVideos = async () => {
-            try {
-                if (searchQuery) {
-                    // 1. Fetch search results to get video IDs
-                    const searchRes = await fetch(
-                        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=20&type=video&key=${API_KEY}`
-                    )
-                    const searchData = await searchRes.json()
-                    
-                    if (searchData.items && searchData.items.length > 0) {
-                        const videoIds = searchData.items.map(item => item.id.videoId)
-                        
-                        // 2. Fetch full video details using those IDs
-                        const detailsRes = await fetch(
-                            `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds.join(",")}&key=${API_KEY}`
-                        )
-                        const detailsData = await detailsRes.json()
-                        if (detailsData.items) {
-                            setVideos(detailsData.items)
-                        }
-                    } else {
-                        setVideos([])
-                    }
-                } else {
-                    // Default: Fetch popular videos
-                    const res = await fetch(
-                        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=20&regionCode=IN&key=${API_KEY}`
-                    )
-                    const data = await res.json()
-                    if (data.items) {
-                        setVideos(data.items)
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching videos:", error)
-            }
-        }
-
         fetchVideos()
     }, [searchQuery])
-
-    useEffect(() => {
-        const fetchChannelIcons = async () => {
-            if (!videos || videos.length === 0) return
-            
-            const channelIds = videos.map(video => video.snippet.channelId)
-            const uniqueChannelIds = [...new Set(channelIds)]
-            
-            if (uniqueChannelIds.length === 0) return
-
-            try {
-                const res = await fetch(
-                    `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${uniqueChannelIds.join(',')}&key=${API_KEY}`
-                )
-                const data = await res.json()
-                
-                if (data.items) {
-                    const iconMap = {}
-                    data.items.forEach(channel => {
-                        iconMap[channel.id] = channel.snippet.thumbnails.default.url
-                    })
-                    setChannelIcons(iconMap)
-                }
-            } catch (error) {
-                console.error("Error fetching channel icons:", error)
-            }
-        }
-
-        fetchChannelIcons()
-    }, [videos])
 
     // Helper to format view count
     const formatViews = (views) => {
@@ -90,63 +50,55 @@ export default function Feed({ searchQuery }) {
 
     // Helper to format ISO 8601 duration
     const formatDuration = (duration) => {
+        if (!duration) return ''
         const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
         const hours = match[1] ? match[1] + ':' : ''
         const minutes = match[2] ? match[2].padStart(2, '0') : '00'
         const seconds = match[3] ? match[3].padStart(2, '0') : '00'
         
-        // If there are hours, make sure minutes is padded
-        if (hours && match[2]) {
-            return `${hours}${minutes}:${seconds}`
-        } else if (hours && !match[2]) {
-            return `${hours}00:${seconds}`
-        }
-        
+        if (hours) return `${hours}${minutes}:${seconds}`
         return `${parseInt(minutes)}:${seconds}`
     }
 
-    // Helper for relative time (simplified)
+    // Helper for relative time
     const formatTime = (dateString) => {
         const date = new Date(dateString)
         const now = new Date()
         const diffInSeconds = Math.floor((now - date) / 1000)
         
-        if (diffInSeconds < 60) return 'just now'
         if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + ' minutes ago'
         if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + ' hours ago'
         if (diffInSeconds < 2592000) return Math.floor(diffInSeconds / 86400) + ' days ago'
-        if (diffInSeconds < 31536000) return Math.floor(diffInSeconds / 2592000) + ' months ago'
-        return Math.floor(diffInSeconds / 31536000) + ' years ago'
+        return Math.floor(diffInSeconds / 2592000) + ' months ago'
     }
+
+    const categories = ["All", "Gaming", "Music", "Mixes", "Live", "Comedy", "Podcasts", "News", "Recently Uploaded", "Watched", "New to you"]
 
     return (
         <div className="feed-container">
+            <div className="filter-bar">
+                {categories.map((category, index) => (
+                    <button key={index} className={`filter-btn ${category === "All" ? "active" : ""}`}>
+                        {category}
+                    </button>
+                ))}
+            </div>
             <div className="video-grid">
                 {videos.map((video) => (
                     <div key={video.id} className="video-card">
                         <div className="thumbnail-container">
-                            <img 
-                                src={video.snippet.thumbnails.high.url} 
-                                alt={video.snippet.title} 
-                            />
+                            <img src={video.snippet.thumbnails.high.url} alt={video.snippet.title} />
                             <span className="duration-tag">
-                                {formatDuration(video.contentDetails.duration)}
+                                {formatDuration(video.contentDetails?.duration)}
                             </span>
                         </div>
                         <div className="video-info">
-                            {channelIcons[video.snippet.channelId] ? (
-                                <img src={channelIcons[video.snippet.channelId]} alt="Channel Avatar" className="channel-avatar" />
-                            ) : (
-                                <div className="channel-avatar placeholder-avatar"></div>
-                            )}
+                            <div className="channel-avatar placeholder-avatar"></div>
                             <div className="video-details">
                                 <h3 className="video-title">{video.snippet.title}</h3>
                                 <p className="channel-name">{video.snippet.channelTitle}</p>
                                 <p className="video-stats">
-                                    {formatViews(video.statistics.viewCount)} • {formatTime(video.snippet.publishedAt)}
-                                </p>
-                                <p className="video-description" title={video.snippet.description}>
-                                    {video.snippet.description}
+                                    {formatViews(video.statistics?.viewCount)} • {formatTime(video.snippet.publishedAt)}
                                 </p>
                             </div>
                         </div>
@@ -155,4 +107,5 @@ export default function Feed({ searchQuery }) {
             </div>
         </div>
     )
+}
 }

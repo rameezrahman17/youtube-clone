@@ -1,0 +1,13 @@
+.app-container {
+    background-color: #0f0f0f;
+    min-height: 100vh;
+}
+
+.main-layout {
+    display: flex;
+}
+
+.content-area {
+    flex: 1;
+    overflow-x: hidden;
+}
