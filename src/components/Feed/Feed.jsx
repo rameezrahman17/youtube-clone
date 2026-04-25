@@ -8,27 +8,61 @@ export default function Feed({ searchQuery }) {
 
     const fetchVideos = async () => {
         try {
-            let url = ""
-            if (searchQuery) {
-                url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=50&type=video&key=${API_KEY}`
-            } else {
-                url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=50&regionCode=IN&key=${API_KEY}`
-            }
-
-            const res = await fetch(url)
-            const data = await res.json()
+            let allVideos = []
+            let nextPageToken = ""
+            
+            // First fetch (50 videos)
+            let url = searchQuery 
+                ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=50&type=video&key=${API_KEY}`
+                : `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=50&regionCode=IN&key=${API_KEY}`
+            
+            let res = await fetch(url)
+            let data = await res.json()
             
             if (data.items) {
-                if (searchQuery) {
-                    const videoIds = data.items.map(item => item.id.videoId)
-                    const detailsRes = await fetch(
-                        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds.join(",")}&key=${API_KEY}`
-                    )
-                    const detailsData = await detailsRes.json()
-                    setVideos(detailsData.items || [])
-                } else {
-                    setVideos(data.items)
+                allVideos = [...data.items]
+                nextPageToken = data.nextPageToken
+            }
+
+            // Second fetch (25 more videos if possible)
+            if (nextPageToken && allVideos.length < 75) {
+                let secondUrl = searchQuery
+                    ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=25&type=video&pageToken=${nextPageToken}&key=${API_KEY}`
+                    : `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=25&regionCode=IN&pageToken=${nextPageToken}&key=${API_KEY}`
+                
+                let secondRes = await fetch(secondUrl)
+                let secondData = await secondRes.json()
+                
+                if (secondData.items) {
+                    allVideos = [...allVideos, ...secondData.items]
                 }
+            }
+
+            // For search, we need to fetch details for all these videos to get stats and duration
+            // Note: videos.list API has a limit of 50 IDs per request
+            if (searchQuery && allVideos.length > 0) {
+                const videoIds = allVideos.map(item => item.id.videoId).filter(id => id)
+                
+                const batch1 = videoIds.slice(0, 50).join(",")
+                const batch2 = videoIds.slice(50, 75).join(",")
+                
+                const fetchDetails = async (ids) => {
+                    if (!ids) return []
+                    const res = await fetch(
+                        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${ids}&key=${API_KEY}`
+                    )
+                    const data = await res.json()
+                    return data.items || []
+                }
+
+                const [details1, details2] = await Promise.all([
+                    fetchDetails(batch1),
+                    fetchDetails(batch2)
+                ])
+                
+                setVideos([...details1, ...details2])
+            } else {
+                setVideos(allVideos)
             }
         } catch (error) {
             console.error("Error fetching videos:", error)
