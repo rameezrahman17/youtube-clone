@@ -3,6 +3,7 @@ import './PlayVideo.css'
 import VideoTitle from './VideoTitle'
 import ChannelRow from './ChannelRow'
 import ActionBar from './ActionBar'
+import Description from './Description'
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
@@ -65,6 +66,8 @@ function PlayVideo({ videoId, onBack }) {
                 <ChannelRow channel={channel} />
                 <ActionBar data={data} />
             </div>
+
+            <Description data={data} />
         </div>
     )
 }
