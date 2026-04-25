@@ -100,6 +100,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
             }
         } catch (error) {
             console.error("Error fetching videos:", error)
+            setVideos([])
         }
     }
 
@@ -120,6 +121,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
     const formatDuration = (duration) => {
         if (!duration) return ''
         const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+        if (!match) return ''
         const hours = match[1] ? match[1] + ':' : ''
         const minutes = match[2] ? match[2].padStart(2, '0') : '00'
         const seconds = match[3] ? match[3].padStart(2, '0') : '00'
@@ -159,7 +161,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
                 {videos.map((video) => (
                     <div key={video.id} className="video-card" onClick={() => onVideoClick && onVideoClick(video.id.videoId || video.id)}>
                         <div className="thumbnail-container">
-                            <img src={video.snippet.thumbnails.high.url} alt={video.snippet.title} />
+                            <img src={(video.snippet.thumbnails?.high || video.snippet.thumbnails?.medium || video.snippet.thumbnails?.default)?.url} alt={video.snippet.title} />
                             <span className="duration-tag">
                                 {formatDuration(video.contentDetails?.duration)}
                             </span>
