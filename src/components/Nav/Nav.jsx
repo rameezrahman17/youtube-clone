@@ -5,7 +5,7 @@ import './Nav.css'
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
-export default function Nav({ onSearch }) {
+export default function Nav({ onSearch, toggleSidebar }) {
     const [currsearch, setCurrsearch] = useState('')
     const [showNotifications, setShowNotifications] = useState(false)
     const [suggestions, setSuggestions] = useState([])
@@ -52,7 +52,7 @@ export default function Nav({ onSearch }) {
         <nav className="nav-container">
             {/* Left Section */}
             <div className="nav-left">
-                <button className="icon-btn">
+                <button className="icon-btn" onClick={toggleSidebar}>
                     <Bars3Icon className="icon" />
                 </button>
                 <div className="youtube-logo" onClick={() => {
