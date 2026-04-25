@@ -6,6 +6,15 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 export default function Feed({ searchQuery, onVideoClick }) {
     const [videos, setVideos] = useState([])
     const [channelData, setChannelData] = useState({})
+    const [selected, setSelected] = useState("All")
+
+    // pick what to search for
+    let query = ""
+    if (searchQuery) {
+        query = searchQuery
+    } else if (selected !== "All") {
+        query = selected
+    }
 
     const fetchVideos = async () => {
         try {
@@ -13,8 +22,8 @@ export default function Feed({ searchQuery, onVideoClick }) {
             let nextPageToken = ""
             
             // First fetch (50 videos)
-            let url = searchQuery 
-                ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=50&type=video&key=${API_KEY}`
+            let url = query
+                ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&maxResults=50&type=video&key=${API_KEY}`
                 : `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=50&regionCode=IN&key=${API_KEY}`
             
             let res = await fetch(url)
@@ -27,8 +36,8 @@ export default function Feed({ searchQuery, onVideoClick }) {
 
             // Second fetch (25 more videos if possible)
             if (nextPageToken && allVideos.length < 75) {
-                let secondUrl = searchQuery
-                    ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&maxResults=25&type=video&pageToken=${nextPageToken}&key=${API_KEY}`
+                let secondUrl = query
+                    ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&maxResults=25&type=video&pageToken=${nextPageToken}&key=${API_KEY}`
                     : `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=25&regionCode=IN&pageToken=${nextPageToken}&key=${API_KEY}`
                 
                 let secondRes = await fetch(secondUrl)
@@ -41,7 +50,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
 
             // For search, we need to fetch details for all these videos to get stats and duration
             // Note: videos.list API has a limit of 50 IDs per request
-            if (searchQuery && allVideos.length > 0) {
+            if (query && allVideos.length > 0) {
                 const videoIds = allVideos.map(item => item.id.videoId).filter(id => id)
                 
                 const batch1 = videoIds.slice(0, 50).join(",")
@@ -96,7 +105,7 @@ export default function Feed({ searchQuery, onVideoClick }) {
 
     useEffect(() => {
         fetchVideos()
-    }, [searchQuery])
+    }, [searchQuery, selected])
 
     // Helper to format view count
     const formatViews = (views) => {
@@ -137,7 +146,11 @@ export default function Feed({ searchQuery, onVideoClick }) {
         <div className="feed-container">
             <div className="filter-bar">
                 {categories.map((category, index) => (
-                    <button key={index} className={`filter-btn ${category === "All" ? "active" : ""}`}>
+                    <button
+                        key={index}
+                        className={`filter-btn ${selected === category ? "active" : ""}`}
+                        onClick={() => setSelected(category)}
+                    >
                         {category}
                     </button>
                 ))}
